@@ -102,11 +102,12 @@ public class BasicActions {
 		String name = object.getString("account");
 		
 		String sqlCodes = String.format("select  video.VideoTitle,video.VideoDes,VideoURL,TypeName \r\n" + 
-				"from video,type \r\n" + 
-				"where video.VideoType = TypeCode video.VideoType in \r\n" + 
+				"from video,type,%s \r\n" + 
+				"where video.VideoType = TypeCode and video.VideoType in \r\n" + 
 				"(SELECT type.TypeCode \r\n" + 
 				"from guanzhu,type \r\n" + 
-				"WHERE guanzhu.TypeCode = type.TypeID and guanzhu.UUID = '%s' )", name);
+				"WHERE guanzhu.TypeCode = type.TypeID and guanzhu.UUID= `user`.UUID and `user`.UserName = '%s' )",DBManager.TABLE_PASSWORD, name);
+		System.out.println(sqlCodes);
 		
 		DBManager sql = DBManager.createInstance();
 		sql.connectDB();
@@ -122,7 +123,37 @@ public class BasicActions {
 				map.put("type", resultSet.getString("TypeName"));
 				response.addListItem(map);
 			}
-			response.setresCode("00");
+			response.setresCode("11");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return response;
+	}
+	
+	public CommonResponse userinfos(JSONObject object) {
+		String name = object.getString("account");
+		
+		String sqlCodes = String.format("SELECT * from %s where `user`.UserName = '%s'",DBManager.TABLE_PASSWORD, name);
+		System.out.println(sqlCodes);
+		
+		DBManager sql = DBManager.createInstance();
+		sql.connectDB();
+
+		CommonResponse response = new CommonResponse();
+		try {
+			ResultSet resultSet = sql.query(sqlCodes);
+			while(resultSet.next()) {
+				HashMap<String, String> map = new HashMap<>();
+				map.put("name", resultSet.getString("name"));
+				map.put("age", resultSet.getString("age"));
+				map.put("sex", resultSet.getString("sex"));
+				map.put("phone", resultSet.getString("phone"));
+				map.put("qq", resultSet.getString("qq"));
+				map.put("email", resultSet.getString("email"));
+				response.addListItem(map);
+			}
+			response.setresCode("11");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

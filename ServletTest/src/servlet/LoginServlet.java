@@ -74,8 +74,11 @@ public class LoginServlet extends HttpServlet {
 		case "2"://注册
 			res.setresCode(actiontype.register(params));
 			break;
-		case "3":
+		case "3"://用户关注视频信息
 			res = actiontype.uservideos(params);
+			break;
+		case "4"://用户基本信息
+			res = actiontype.userinfos(params);
 			break;
 		}
 		
