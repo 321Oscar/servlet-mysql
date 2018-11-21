@@ -54,7 +54,7 @@ public class LoginServlet extends HttpServlet {
 		}
 		read.close();
 		String req = sb.toString();
-		System.out.println("first:"+req);
+		System.out.println("客户端传值:"+req);
 		
 		//获取客户端发来的请求，恢复其JSON——>需要客户端发请求时也封装成JSON
 		JSONObject object = JSONObject.fromObject(req);
@@ -74,17 +74,27 @@ public class LoginServlet extends HttpServlet {
 		case "2"://注册
 			res.setresCode(actiontype.register(params));
 			break;
-		case "3"://用户关注视频信息
-			res = actiontype.uservideos(params);
+		case "3"://所有视频信息
+			res = actiontype.allVideos();
 			break;
 		case "4"://用户基本信息
 			res = actiontype.userinfos(params);
+			break;
+		case "5"://关注的类型
+			System.out.println("关注信息搜索：");
+			res = actiontype.GuanzhuType(params);
+			break;
+		case "6"://用户密码修改
+			res.setresCode(actiontype.UpdatePass(params));
+			break;
+		case "7"://用户基本信息修改 传入整个json数据
+			res.setresCode(UpdateInfos.UpdateInfo(object));
 			break;
 		}
 		
 		//JSON格式转为字符串
 		String resStr = JSONObject.fromObject(res).toString();
-		System.out.println("second"+resStr);
+		System.out.println("服务端返回值："+resStr+"\n");
 		//传回客户端
 		response.getWriter().append(resStr).flush();
 		

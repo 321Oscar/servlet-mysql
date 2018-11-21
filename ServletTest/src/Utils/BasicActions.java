@@ -58,8 +58,8 @@ public class BasicActions {
 	 * @param Json格式的参数，带有注册所需的参数*/
 	public String register(JSONObject object) {
 		//获取账号，密码,名字，性别，年龄，手机，qq，邮箱
-		String[] params = new String[8];
-		for(int i = 0;i<8;i++) {
+		String[] params = new String[2];
+		for(int i = 0;i<2;i++) {
 			String code = Integer.toString(i);
 			params[i] = object.getString(code);
 		}
@@ -97,16 +97,12 @@ public class BasicActions {
 		return resCode;
 	}
 	
-	//根据用户id查找其关注的typeCode，再根据typeCode查找video
-	public CommonResponse uservideos(JSONObject object) {
-		String name = object.getString("account");
-		
-		String sqlCodes = String.format("select  video.VideoTitle,video.VideoDes,VideoURL,TypeName \r\n" + 
-				"from video,type,%s \r\n" + 
-				"where video.VideoType = TypeCode and video.VideoType in \r\n" + 
-				"(SELECT type.TypeCode \r\n" + 
-				"from guanzhu,type \r\n" + 
-				"WHERE guanzhu.TypeCode = type.TypeID and guanzhu.UUID= `user`.UUID and `user`.UserName = '%s' )",DBManager.TABLE_PASSWORD, name);
+	/*
+	 * 取出所有的视频 
+	 * */
+	public CommonResponse allVideos() {
+		String sqlCodes = "select VideoTitle,Videodes,VideoURL,TypeName,ImgURL from video,type\r\n" + 
+				"WHERE video.VideoType = type.TypeCode" ;
 		System.out.println(sqlCodes);
 		
 		DBManager sql = DBManager.createInstance();
@@ -121,6 +117,7 @@ public class BasicActions {
 				map.put("des", resultSet.getString("VideoDes"));
 				map.put("url", resultSet.getString("VideoURL"));
 				map.put("type", resultSet.getString("TypeName"));
+				map.put("imgurl", resultSet.getString("ImgURL"));
 				response.addListItem(map);
 			}
 			response.setresCode("11");
@@ -128,9 +125,14 @@ public class BasicActions {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		sql.close();
 		return response;
 	}
 	
+	/*查询用户的基本信息
+	 * 
+	 * @param object 参数
+	 * */
 	public CommonResponse userinfos(JSONObject object) {
 		String name = object.getString("account");
 		
@@ -158,6 +160,86 @@ public class BasicActions {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		sql.close();
 		return response;
+	}
+	
+	/*
+	 * 查询用户关注的类别
+	 * 
+	 * @param
+	 * */
+	public CommonResponse GuanzhuType(JSONObject object) {
+		String name = object.getString("account");
+		
+		String sqlquery = String.format("SELECT TypeName,TypeDes,TypeImg  \r\n" + 
+				"from guanzhu,type,`user`\r\n" + 
+				"WHERE guanzhu.TypeCode = type.TypeID and guanzhu.UUID= `user`.UUID and `user`.UserName = '%s'", name);
+		System.out.println(sqlquery);
+		
+		DBManager dbManager = new DBManager();
+		dbManager.connectDB();
+		
+		CommonResponse response = new CommonResponse();
+		response.setresCode("00");
+		try {
+			ResultSet resultSet = dbManager.query(sqlquery);
+			while(resultSet.next()) {
+				HashMap<String, String> data = new HashMap<>();
+				data.put("name", resultSet.getString("TypeName"));
+				data.put("des", resultSet.getString("TypeDes"));
+				data.put("url", resultSet.getString("TypeImg"));
+				response.addListItem(data);
+			}
+			response.setresCode("11");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		dbManager.close();
+		
+		return response;
+	}
+	
+	/*
+	 * 查询用户屏蔽的类别
+	 * */
+	
+	/*
+	 * 更新用户密码
+	 * */
+	public String UpdatePass(JSONObject object) {
+		String name = object.getString("account");
+		String oldpsw = object.getString("oldpass");
+		String newpsw = object.getString("newpass");
+		
+		
+		String sqlquery = String.format("SELECT `user`.`name` \r\n" + 
+				"from `user` \r\n" + 
+				"where `user`.UserName = '%s' and `user`.pass ='%s'", name,oldpsw);
+		
+		DBManager dbManager = DBManager.createInstance();
+		dbManager.connectDB();
+
+		String resCode = "00";
+				
+		try {		
+			if (dbManager.query(sqlquery).next()) {
+				String sqlupdate = String.format("UPDATE `user` SET pass = '%s'\r\n" + 
+						"where `user`.UserName = '%s'",newpsw,name);
+				System.out.println("---修改密码----"+sqlupdate);
+				if(dbManager.update(sqlupdate)>0) {
+					resCode = "11";//修改成功
+				}else{
+					resCode = "10";//修改失败
+				}
+			}else{
+				resCode = "01";//密码错误
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return resCode;
 	}
 }
